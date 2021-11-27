@@ -1,5 +1,5 @@
-import numpy as np
 from __future__ import division
+import numpy as np
 
 def standard_scaler(X):
     """
@@ -41,7 +41,7 @@ class RegularizedRegression:
         self.N, self.D = self.X.shape
         self.lam = lam
     
-    def fit_ridge(self, X, y, lam = 0, intercept = False, standardize = True):
+    def fit_ridge(self, X, y, lam = 0, intercept = True, standardize = True):
         
         # record the info
         self._record_info(X, y, lam, intercept, standardize)
