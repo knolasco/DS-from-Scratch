@@ -75,9 +75,30 @@ class RegularizedRegression:
         self.y_hat = np.dot(self.X, self.beta_hats)
     
     def predict(self, X_test, intercept = True):
+
         if intercept:
             ones = np.ones(len(X_test)).reshape(len(X_test), 1)
             X_test = np.concatenate((ones, X_test), axis = 1)
 
         self.y_test_hat = np.dot(X_test, self.beta_hats)
-    
+
+class BayesianRegression:
+
+    def fit(self, X, y, sigma_squared, tau, add_intercept = True):
+
+        if add_intercept:
+            ones = np.ones(len(X)).reshape(len(X), 1)
+            X = np.concatenate((ones, np.array(X)), axis = 1)
+        
+        self.X = X
+        self.y = y
+
+        # fit it
+        XtX = np.dot(X.T, X) / sigma_squared
+        I = np.eye(X.shape[1]) / tau
+        inverse = np.linalg.inv(XtX + I)
+        Xty = np.dot(X.T, y) / sigma_squared
+        self.beta_hats = np.dot(inverse, Xty)
+
+        # fitted values
+        self.y_hat = np.dot(X, self.beta_hats)
