@@ -102,3 +102,38 @@ class BayesianRegression:
 
         # fitted values
         self.y_hat = np.dot(X, self.beta_hats)
+
+class PoissonRegression:
+    """
+    GLM's can be fit into 4 steps:
+        1. Specify the distribution of Y_n, indexed
+        by its mean parameter mu_n
+        
+        2. Specify the link funciton nu_n = g(mu_n)
+
+        3. Identify a loss function. This is typically the negative
+        log-likelihood
+
+        4. Find the Beta_hat that minimize the loss function.
+    """
+    def fit(self, X, y, n_iter = 1000, lr = 0.00001, add_intercept = True, standardize = True):
+        
+        # initial steps
+        if standardize:
+            X = standard_scaler(X)
+        if add_intercept:
+            ones = np.ones(len(X)).reshape((len(X), 1))
+            X = np.append(ones, X, axis = 1)
+        self.X = X
+        self.y = y
+
+        # get coefficients
+        beta_hats = np.zeros(X.shape[1])
+        for i in range(n_iter):
+            y_hat = np.exp(np.dot(X, beta_hats))
+            dLdbeta = np.dot(X.T, y_hat - y)
+            beta_hats -= lr*dLdbeta
+        
+        # save the coefficients and fitted values
+        self.beta_hats = beta_hats
+        self.y_hat = y_hat
