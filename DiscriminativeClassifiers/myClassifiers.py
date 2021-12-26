@@ -107,3 +107,39 @@ def to_binary(y):
     returns 0 or 1
     """
     return y > 0
+
+class Perceptron:
+
+    def fit(self, X, y, n_iter = 10**3, lr = 0.001, add_intercept = True, standardize = True):
+
+        # standardize and intercept
+        if standardize:
+            X = standard_scaler(X)
+        if add_intercept:
+            ones = np.ones(X.shape[0]).reshape(-1,1)
+            X = np.concatenate((ones, X), axis = 1)
+        
+        # initialize the attributes
+        self.X = X
+        self.N, self.D = self.X.shape
+        self.y = y
+        self.n_iter = n_iter
+        self.lr = lr
+        self.converged = False
+
+        # fit
+        beta = np.random.randn(self.D)/5
+        for i in range(self.n_iter):
+
+            # form some predictions
+            yhat = to_binary(sign(np.dot(self.X, beta)))
+
+            # check to see if it converged
+            if np.all(yhat == sign(self.y)):
+                self.converged = True
+                self.iterations_until_convergence = i
+                break
+            
+            # otherwise, adjust beta
+            for n in range(self.N):
+                yhat_n = sign(np.dot(beta, self.X[n]))
