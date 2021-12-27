@@ -143,3 +143,9 @@ class Perceptron:
             # otherwise, adjust beta
             for n in range(self.N):
                 yhat_n = sign(np.dot(beta, self.X[n]))
+                if (self.y[n]*yhat_n == -1):
+                    beta += self.lr*self.y[n]*self.X[n]
+        
+        # return values
+        self.beta = beta
+        self.yhat = to_binary(sign(np.dot(self.X, self.beta)))
