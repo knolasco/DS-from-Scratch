@@ -31,3 +31,24 @@ class LDA:
     
         # save final sigma
         self.Sigma /= self.N
+    
+
+    # prepare for classifications
+    def _mvn_density(self, x_n, mu_k, Sigma):
+        x_n_minus_mu_k = (x_n - mu_k)
+        density = np.exp(-(1/2)*x_n_minus_mu_k.T @ np.linalg.inv(Sigma) @ x_n_minus_mu_k)
+        return density
+    
+    def classify(self, X_test):
+        y_n = np.empty(len(X_test))
+        for i, x_n in enumerate(X_test):
+            x_n = x_n.reshape(-1,1)
+            p_ks = np.empty(len(self.unique_y))
+
+            for j, k in enumerate(self.unique_y):
+                p_x_given_y = self._mvn_density(x_n, self.mu_ks[j], self.Sigma)
+                p_y_given_x = self.pi_ks[j]*p_x_given_y
+                p_ks[j] = p_y_given_x
+        
+            y_n[i] = self.unique_y[np.argmax(p_ks)]
+        return y_n
