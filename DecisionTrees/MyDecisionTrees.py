@@ -1,5 +1,6 @@
 from __future__ import division
 import numpy as np
+from numpy.lib.shape_base import split
 
 # =========================== HELPER FUNCTIONS ==================================
 
@@ -88,8 +89,100 @@ class DecisionTreeRegressor:
         We include it now so that it may be used in the next section.
         """
 
-        # initialize attributes
+        # Initialize attributes
         self.X = X
         self.y = y
         self.N, self.D = self.X.shape
+        # Save dtype for each dimension in X
+        dtypes = [np.array(list(self.X[:,d])).dtype for d in range(self.D)]
+        # Categorize dtypes
+        self.dtypes = ['quant' if (dtype == float or dtype == int) else 'cat' for dtype in dtypes]
+
+        # Save regularization parameters
+        self.max_depth = max_depth
+        self.min_size = min_size
+        self.C = C
+
+        # Initialize Nodes
+        self.nodes_dict = {}
+        self.current_ID = 0
+        initial_node = Node(Xsub = X, ysub = y, ID = self.current_ID, parent_ID = None)
+        self.nodes_dict[self.current_ID] = initial_node
+        self.current_ID += 1
+
+        # Build tree
+        self._build()
+    
+    def _build(self):
+        """
+        Build the tree. Iterate through each layer of the tree, based on max_depth,
+        splitting each eligible bud before proceeding to the next layer. The eligible buds are
+        tracked through the eligible_buds dictionary. A bug is eligible if:
+            1) it does not have children (is a leaf)
+            2) not smaller than min_size
+            3) observations are not identical across all predictors
+            4) has more than one unique value of the target variable.
         
+        The process contiunues until there are no more eligible buds or we reach the max_depth
+        """
+
+        eligible_buds = self.nodes_dict # when intiated, the only bud is the initial_bud
+        for layer in range(self.max_depth):
+
+            # find the eligible buds for layer iteration
+            eligible_buds = {ID:node for (ID, node) in self.nodes_dict.items() if
+                                (node.leaf == True) &
+                                (node.size >= self.min_size) &
+                                (~all_rows_equal(node.Xsub)) &
+                                (len(np.unique(node.ysub)) > 1)}
+                            
+            if len(eligible_buds) == 0:
+                break
+
+            # make a split for each eligible parent
+            for ID, bud in eligible_buds.items():
+
+                # find the split for the bud
+                self._find_split(bud)
+
+                # make the appropriate split
+                if not self.splitter.no_split: # used for random forest
+                    self.make_split()
+    
+    def _find_split(self, bud):
+        """
+        Method uses the Splitter class. Loops through all predictors and all possible splits for that
+        predictor to find the split that minimizes the RSS.
+        If predictor is quantitative, we loop through each unique value and calculate the RSS.
+        If predictor is categorical, we call sort_x_by_y() to order the categories of x to then
+        calculate the RSS reduction. 
+        """
+
+        # Initiate Splitter
+        splitter = Splitter()
+        splitter.bud_ID = bud.ID
+
+        # Gather the eligible predictors (Used for Random Forests)
+        if self.C is None:
+            eligible_predictors = np.arange(self.D)
+        else:
+            # D choose C
+            eligible_predictors = np.random.choice(np.arange(self.D), self.C, replace = False)
+        
+        # Loop through eligible predictors
+        for d in sorted(eligible_predictors):
+            Xsub_d = bud.Xsub[:, d] # the dth column
+            dtype = self.dtypes[d]
+            if len(np.unique(Xsub_d)) == 1:
+                continue
+
+            # Loop through threshold values
+            if dtype == 'quant':
+                for t in np.unique(Xsub_d)[:-1]:
+                    ysub_L = bud.ysub[Xsub_d <= t]
+                    ysub_R = bud.ysub[Xsub_d > t]
+                    rss_reduction = RSS_reduction(ysub_L, ysub_R, bud.ysub)
+
+                    # check to see if a split should be made
+                    if rss_reduction > splitter.rss_reduction:
+                        splitter._replace_split(rss_reduction, d, dtype = 'quant', t = t)
