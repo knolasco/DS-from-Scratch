@@ -1,5 +1,7 @@
 from __future__ import division
+from _typeshed import SupportsKeysAndGetItem
 import numpy as np
+from numpy.core.fromnumeric import sort
 from numpy.lib.shape_base import split
 
 # =========================== HELPER FUNCTIONS ==================================
@@ -185,4 +187,93 @@ class DecisionTreeRegressor:
 
                     # check to see if a split should be made
                     if rss_reduction > splitter.rss_reduction:
-                        splitter._replace_split(rss_reduction, d, dtype = 'quant', t = t)
+                        splitter._replace_split(rss_reduction, d = d, dtype = 'quant', t = t)
+            
+            else:
+                ordered_x = sort_x_by_y(Xsub_d, bud.ysub)
+                for i in range(len(ordered_x) - 1):
+                    L_values = ordered_x[: i + 1]
+                    ysub_L = bud.ysub[np.isin(Xsub_d, L_values)]
+                    ysub_R = bud.ysub[~np.isin(Xsub_d, L_values)]
+                    rss_reduction = RSS_reduction(ysub_L, ysub_R, bud.ysub)
+
+                    # check to see if a split should be made
+                    if rss_reduction > splitter.rss_reduction:
+                        splitter._replace_split(rss_reduction, d = d, dtype = 'cat', L_values = L_values)
+        
+        # save information of the splitter
+        self.splitter = splitter
+    
+    def _make_split(self):
+        """
+        If a bud is to be split, this method updates the parent node with the split information
+        that creates the children nodes. For the parent node, we save the predictor - d - that was used to make the split
+        and how, and record the ID for the child nodes.
+        For each child node, record the training observations passing through the node, it's ID, the parent ID, the size and depth.
+        """
+
+        # Update the parent node
+        parent_node = self.nodes_dict[self.splitter.bud_ID]
+        parent_node.leaf = False # since it will now be split, it is no longer a leaf
+        parent_node.child_L = self.current_ID
+        parent_node.child_R = self.current_ID + 1
+        parent_node.d = self.splitter.d
+        parent_node.dtype = self.splitter.dtype
+        parent_node.t = self.splitter.t
+        parent_node.L_values = self.splitter.L_values
+
+        # Get X and y for children nodes
+        if parent_node.dtype == 'quant':
+            L_condition = parent_node.Xsub[: parent_node.d] <= parent_node.t
+        else:
+            L_condition = np.isin(parent_node.Xsub[: parent_node.d], parent_node.L_values)
+        
+        Xchild_L = parent_node.Xsub[L_condition]
+        Xchild_R = parent_node.Xsub[~L_condition]
+        ychild_L = parent_node.ysub[L_condition]
+        ychild_R = parent_node.ysub[~L_condition]
+
+        # Create child nodes
+        child_node_L = Node(Xchild_L, ychild_L, ID = self.current_ID, parent_ID = parent_node.ID, depth = parent_node.depth + 1)
+        child_node_R = Node(Xchild_R, ychild_R, ID = self.current_ID + 1, parent_ID = parent_node.ID, depth = parent_node.depth + 1)
+
+        self.nodes_dict[self.current_ID] = child_node_L
+        self.nodes_dict[self.current_ID + 1] = child_node_R
+        self.current_ID += 2
+
+    # Predicting
+    def _get_leaf_means(self):
+        """
+        Calculates the average of the target variable among training observations.
+        """
+        self.leaf_means = {}
+        for node_ID, node in self.nodes_dict.items():
+            if node.leaf:
+                self.leaf_means[node_ID] = node.ysub.mean()
+    
+    def predict(self, X_test):
+        """
+        Run each new observation through the built tree and return a fitted value:
+        the mean target variable in the leaf.
+        """
+
+        # Calculate the leaf means
+        self._get_leaf_means()
+
+        yhat = []
+        for x in X_test:
+            node = self.nodes_dict[0] # start at the very top
+            while not node.leaf:
+                if node.dtype == 'quant':
+                    if x[node.d] <= node.t: # if dimension passes threshold, go to left node, else go to right
+                        node = self.nodes_dict[node.child_L]
+                    else:
+                        node = self.nodes_dict[node.child_R]
+                else:
+                    if x[node.d] in node.L_values:
+                        node = self.nodes_dict[node.child_L]
+                    else:
+                        node = self.nodes_dict[node.child_R]
+            yhat.append(self.leaf_means[node.ID])
+        return np.array(yhat)
+        
