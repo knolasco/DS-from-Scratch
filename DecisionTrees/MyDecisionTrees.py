@@ -275,3 +275,25 @@ class DecisionTreeRegressor:
             yhat.append(self.leaf_means[node.ID])
         return np.array(yhat)
         
+
+# =========================== DecisionTreeClassifier ============================
+
+# =========================== HELPER FUNCTIONS ==================================
+
+def gini_index(y):
+    """
+    Used to calculate the loss of a single node
+    """
+    size = len(y)
+    _, counts = np.unique(y, return_counts = True)
+    pmk = counts / size
+    return np.sum(pmk*(1-pmk))
+
+def cross_entropy(y):
+    """
+    Used to calculate the loss of a single node
+    """
+    size = len(y)
+    _, counts = np.unique(y, return_counts = True)
+    pmk = counts / size
+    return -np.sum(pmk*np.log2(pmk))
