@@ -1,5 +1,7 @@
 from __future__ import division
 import numpy as np
+from numpy.core.numeric import cross
+from itertools import combinations
 
 
 # =========================== HELPER FUNCTIONS ==================================
@@ -297,3 +299,72 @@ def cross_entropy(y):
     _, counts = np.unique(y, return_counts = True)
     pmk = counts / size
     return -np.sum(pmk*np.log2(pmk))
+
+def split_loss(child1, child2, loss = cross_entropy):
+    """
+    Calculates the weighted loss of a split
+    """
+    return (len(child1)*loss(child1) + len(child2)*loss(child2)) / (len(child1) + len(child2))
+
+def possible_splits(x):
+    """
+    Returns all possible ways to divide the classes in a categorical predictor into two.
+    """
+    L_values = []
+    for i in range(1, int(np.floor(len(x)/2)) + 1):
+        L_values.extend(list(combinations(x,i)))
+    return L_values
+
+# =========================== HELPER CLASSES ==================================
+
+class Node2:
+    """
+    Very similar to Node class used for regression
+    """
+    def __init__(self, Xsub, ysub, ID, obs, depth = 0, parent_ID = None, leaf = True):
+        self.Xsub = Xsub
+        self.ysub = ysub
+        self.ID = ID
+        self.obs = obs
+        self.size = len(self.ysub)
+        self.depth = depth
+        self.parent_ID = parent_ID
+        self.leaf = leaf
+
+class Splitter2:
+    """
+    Very similar to Splitter class used for regression
+    """
+    def __init__(self):
+        self.loss = np.inf
+        self.no_split = True
+    
+    def _replace_split(self, Xsub_d, loss, d, dtype = 'quant', t = None, L_values = None):
+        self.loss = loss
+        self.d = d
+        self.dtype = dtype
+        self.t = t
+        self.L_values = L_values
+        self.no_split = False
+        if dtype == 'quant':
+            self.L_obs = self.obs[Xsub_d <= t]
+            self.R_obs = self.obs[Xsub_d > t]
+        else:
+            self.L_obs = self.obs[np.isin(Xsub_d, L_values)]
+            self.R_obs = self.obs[~np.isin(Xsub_d, L_values)]
+    
+# =========================== MAIN DECISION TREE CLASS ==================================
+
+class DecisionTreeClassifier:
+    """
+    The construction of the tree is almost identical to the regression tree.
+    One of the biggest differences is how the predictions are made.
+    """
+    def fit(self, X, y, loss_func = cross_entropy, max_depth = 100, min_size = 2, C = None):
+
+        # initialize attributes
+        self.X = X
+        self.y = y
+        self.N, self.D = self.X.shape
+        dtypes = [np.array(list(self.X[:, d])).dtype for d in range(self.D)]
+        self.dtypes = ['quant' if (dtype == float or dtype == int) else 'cat' for dtype in dtypes]   
