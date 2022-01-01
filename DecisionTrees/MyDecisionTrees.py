@@ -147,7 +147,7 @@ class DecisionTreeRegressor:
 
                 # make the appropriate split
                 if not self.splitter.no_split: # used for random forest
-                    self.make_split()
+                    self._make_split()
     
     def _find_split(self, bud):
         """
@@ -222,9 +222,9 @@ class DecisionTreeRegressor:
 
         # Get X and y for children nodes
         if parent_node.dtype == 'quant':
-            L_condition = parent_node.Xsub[: parent_node.d] <= parent_node.t
+            L_condition = parent_node.Xsub[:,parent_node.d] <= parent_node.t
         else:
-            L_condition = np.isin(parent_node.Xsub[: parent_node.d], parent_node.L_values)
+            L_condition = np.isin(parent_node.Xsub[: ,parent_node.d], parent_node.L_values)
         
         Xchild_L = parent_node.Xsub[L_condition]
         Xchild_R = parent_node.Xsub[~L_condition]
