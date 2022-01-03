@@ -367,4 +367,68 @@ class DecisionTreeClassifier:
         self.y = y
         self.N, self.D = self.X.shape
         dtypes = [np.array(list(self.X[:, d])).dtype for d in range(self.D)]
-        self.dtypes = ['quant' if (dtype == float or dtype == int) else 'cat' for dtype in dtypes]   
+        self.dtypes = ['quant' if (dtype == float or dtype == int) else 'cat' for dtype in dtypes]
+    
+        # initialize model parameters
+        self.loss_func = loss_func
+        self.max_depth = max_depth
+        self.min_size = min_size
+        self.C = C
+
+        # initialize nodes
+        self.nodes_dict = {}
+        self.current_ID = 0
+        initial_node = None(Xsub = X, ysub = y, ID = self.current_ID, obs = np.arange(self.N), parent_ID = None)
+        self.nodes_dict[self.current_ID] = initial_node
+        self.current_ID += 1
+
+        # build the tree
+        self._build()
+    
+    def _build(self):
+
+        eligible_buds = self.nodes_dict
+        for layer in range(self.max_depth):
+
+            # find the eligible nodes to loop through
+            eligible_buds = {ID:node for (ID, node) in self.nodes_dict.items() if
+                                (node.leaf == True) &
+                                (node.size >= self.min_size) &
+                                (~all_rows_equal(node.Xsub)) &
+                                (len(np.unique(node.ysub)) > 1)}
+            
+            # if there are no eligible buds, then we stop building
+            if len(eligible_buds) == 0:
+                break
+            
+            # make a split for each eligible parent
+            for ID, bud in eligible_buds.items():
+                # find the split
+                self._find_split(bud)
+                # make the split
+                if not self.splitter.no_split:
+                    self._make_split()
+    
+    def _find_split(self, bud):
+
+        # create instance of splitter2
+        splitter = Splitter2()
+        splitter.bud_ID = bud.ID
+        splitter.obs = bud.obs
+
+        # create combination of eligible predictors based on C value
+
+        if self.C is None:
+            eligible_predictors = np.arange(self.D)
+        else:
+            eligible_predictors = np.random.choice(np.arange(self.D), self.C, replace = False)
+        
+        # sort through each dimension (column)
+        for d in sorted(eligible_predictors):
+            Xsub_d = bud.Xsub[:, d]
+            dtype = self.dtypes[d]
+            if len(np.unique(Xsub_d)) == 1:
+                continue
+            
+            # find the best threshold depending on dtype
+            
