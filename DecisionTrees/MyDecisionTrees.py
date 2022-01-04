@@ -3,6 +3,8 @@ import numpy as np
 from numpy.core.numeric import cross
 from itertools import combinations
 
+from numpy.lib.shape_base import split
+
 
 # =========================== HELPER FUNCTIONS ==================================
 
@@ -431,4 +433,36 @@ class DecisionTreeClassifier:
                 continue
             
             # find the best threshold depending on dtype
-            
+            if dtype == 'quant':
+                for t in np.unique(Xsub_d)[:-1]:
+                    ysub_L = bud.ysub[Xsub_d <= t]
+                    ysub_R = bud.ysub[Xsub_d > t]
+                    loss = split_loss(ysub_L, ysub_R, loss = self.loss_func)
+                    # check to see if the loss is reduced
+                    if loss < splitter.loss:
+                        splitter._replace_split(Xsub_d, loss, d, 'quant', t = t)
+            else:
+                for L_values in possible_splits(np.unique(Xsub_d)):
+                    ysub_L = bud.ysub[np.isin(Xsub_d, L_values)]
+                    ysub_R = bud.ysub[~np.isin(Xsub_d, L_values)]
+                    loss = split_loss(ysub_L, ysub_R, loss = self.loss_func)
+                    if loss < splitter.loss:
+                        splitter._replace_split(Xsub_d, loss, d, 'cat', L_values = L_values)
+        
+        # save the splitter
+        self.splitter = splitter
+    
+    def _make_split(self):
+
+        # update parent node attributes
+        parent_node = self.nodes_dict[self.splitter.bud_ID]
+        parent_node.leaf = False
+        parent_node.child_L = self.current_ID
+        parent_node.child_R = self.current_ID + 1
+        parent_node.d = self.splitter.d
+        parent_node.dtype = self.splitter.dtype
+        parent_node.t = self.splitter.t
+        parent_node.L_values = self.splitter.L_values
+        parent_node.L_obs, parent_node.R_obs = self.splitter.L_obs, self.splitter.R_obs
+
+        #
