@@ -465,4 +465,23 @@ class DecisionTreeClassifier:
         parent_node.L_values = self.splitter.L_values
         parent_node.L_obs, parent_node.R_obs = self.splitter.L_obs, self.splitter.R_obs
 
-        #
+        # Get X and y data for the child nodes
+        if parent_node.dtype == 'quant':
+            L_condition = parent_node.Xsub[:, parent_node.d] <= parent_node.t
+        else:
+            L_condition = np.isin(parent_node.Xsub[:, parent_node.d], parent_node.L_values)
+        Xchild_L = parent_node.Xsub[L_condition]
+        Xchild_R = parent_node.Xsub[~L_condition]
+        ychild_L = parent_node.ysub[L_condition]
+        ychild_R = parent_node.ysub[~L_condition]
+
+        # create the child nodes
+        child_node_L = Node2(Xchild_L, ychild_L, obs = parent_node.L_obs, depth = parent_node.depth + 1, 
+                            ID = self.current_ID, parent_ID = parent_node.ID)
+        child_node_R = Node2(Xchild_R, ychild_R, obs = parent_node.R_obs, depth = parent_node.depth + 1,
+                            ID = self.current_ID + 1, parent_ID = parent_node.ID)
+        
+        self.nodes_dict[self.current_ID] = child_node_L
+        self.nodes_dict[self.current_ID + 1] = child_node_R
+        self.current_ID += 2
+        
