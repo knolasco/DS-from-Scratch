@@ -1,4 +1,5 @@
 from __future__ import division
+import enum
 import numpy as np
 from numpy.core.numeric import cross
 from itertools import combinations
@@ -484,4 +485,35 @@ class DecisionTreeClassifier:
         self.nodes_dict[self.current_ID] = child_node_L
         self.nodes_dict[self.current_ID + 1] = child_node_R
         self.current_ID += 2
-        
+    
+    # methods for predicting
+    def _get_leaf_modes(self):
+        self.leaf_modes = {}
+        for node_ID, node in self.nodes_dict.items():
+            if node.leaf:
+                values, counts = np.unique(node.ysub, return_counts = True)
+                self.leaf_modes[node_ID] = values[np.argmax(counts)]
+    
+    def predict(self, X_test):
+
+        # calculate leaf modes
+        self._get_leaf_modes()
+
+        yhat = []
+
+        for x in X_test:
+            node = self.nodes_dict[0]
+            # start at parent leaf and go down tree until we go to a leaf
+            while not node.leaf:
+                if node.dtype == 'quant':
+                    if x[node.d] <= node.t:
+                        node = self.nodes_dict[node.child_L]
+                    else:
+                        node = self.nodes_dict[node.child_R]
+                else:
+                    if x[node.d] in node.L_values:
+                        node = self.nodes_dict[node.child_L]
+                    else:
+                        node = self.nodes_dict[node.child_R]
+            yhat.append(self.leaf_modes[node.ID])
+        return np.array(yhat)
