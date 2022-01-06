@@ -381,7 +381,7 @@ class DecisionTreeClassifier:
         # initialize nodes
         self.nodes_dict = {}
         self.current_ID = 0
-        initial_node = None(Xsub = X, ysub = y, ID = self.current_ID, obs = np.arange(self.N), parent_ID = None)
+        initial_node = Node2(Xsub = X, ysub = y, ID = self.current_ID, obs = np.arange(self.N), parent_ID = None)
         self.nodes_dict[self.current_ID] = initial_node
         self.current_ID += 1
 
