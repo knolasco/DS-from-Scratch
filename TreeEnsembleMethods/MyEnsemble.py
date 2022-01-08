@@ -10,10 +10,12 @@ class Bagger:
         
         # initialize attributes
         self.X_train = X_train
-        self.N, self.D = self.X.shape
+        self.N, self.D = self.X_train.shape
         self.y_train = y_train
         self.B = B
         self.seed = seed
+        self.max_depth = max_depth
+        self.min_size = min_size
         self.trees = []
 
         # set seed
