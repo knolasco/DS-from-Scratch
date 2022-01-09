@@ -65,7 +65,7 @@ class RandomForest:
             X_train_b = self.X_train[sample]
             y_train_b = self.y_train[sample]
 
-            tree = DecisionTreeRegressor
+            tree = DecisionTreeRegressor()
             tree.fit(X_train_b, y_train_b, max_depth = self.max_depth, min_size = self.min_size, C = self.C)
             self.trees.append(tree)
         
