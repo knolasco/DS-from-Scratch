@@ -77,3 +77,10 @@ class RandomForest:
         
         return y_test_hats.mean(0)
 
+
+# ==================================== HELPER FUNCTIONS FOR ADA ===================================
+
+def get_weighted_pmk(y, weights):
+    ks = np.unique(y)
+    weighted_pmk = [sum(weights[y == k]) for k in ks]
+    return (np.array(weighted_pmk) / sum(weights))
