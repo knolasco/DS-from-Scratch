@@ -2,7 +2,7 @@ from __future__ import division
 from enum import EnumMeta
 import numpy as np
 from MyDecisionTrees import DecisionTreeRegressor
-from MyDecisionTrees import all_rows_equal
+from MyDecisionTrees import all_rows_equal, possible_splits
 
 # bagging regressor
 
@@ -222,7 +222,7 @@ class DecisionTreeClassifier:
                     if loss < splitter.loss:
                         splitter._replace_split(loss, d, 'quant', t = t)
             else:
-                for L_values in ct.possible_splits(np.unique(Xsub_d)):
+                for L_values in possible_splits(np.unique(Xsub_d)):
                     L_condition = np.isin(Xsub_d, L_values)
                     ysub_L = bud.ysub[L_condition]
                     ysub_R = bud.ysub[~L_condition]
