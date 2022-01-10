@@ -425,5 +425,10 @@ class AdaBoostR2:
                                         for n in range(self.N)])
         
 
-
-            
+    def predict(self, X_test):
+        N_test = len(X_test)
+        fitted_values = np.empty((N_test, self.T))
+        for t, tree in enumerate(self.trees):
+            fitted_values[:, t] = tree.predict(X_test)
+        return np.array([weighted_median(fitted_values[n], self.model_weights) 
+                            for n in range(N_test)])
