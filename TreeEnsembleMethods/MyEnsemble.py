@@ -307,4 +307,18 @@ class DecisionTreeClassifier:
                         node = self.nodes_dict[node.child_R]
             yhat.append(self.leaf_modes[node.ID])
         return np.array(yhat)
-            
+
+
+# start building ADA boost
+
+class AdaBoost:
+
+    def fit(self, X_train, y_train, T, stub_depth = 1):
+        
+        # initialize attributes
+        self.X_train = X_train
+        self.N, self.D = self.X_train.shape
+        self.y_train = y_train
+        self.T = T
+        self.stub_depth = stub_depth
+        
