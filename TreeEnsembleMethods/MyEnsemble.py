@@ -84,3 +84,14 @@ def get_weighted_pmk(y, weights):
     ks = np.unique(y)
     weighted_pmk = [sum(weights[y == k]) for k in ks]
     return (np.array(weighted_pmk) / sum(weights))
+
+def gini_index(y, weights):
+    weighted_pmk = get_weighted_pmk(y, weights)
+    return np.sum(weighted_pmk*(1-weighted_pmk))
+
+def cross_entropy(y, weights):
+    weighted_pmk = get_weighted_pmk(y, weights)
+    return -np.sum(weighted_pmk*np.log2(weighted_pmk))
+
+def split_loss(child1, child2, weights1, weights2, loss = cross_entropy):
+    return (len(child1)*loss(child1, weights1) + len(child2)*loss(child2, weights2))/(len(child1) + len(child2))
