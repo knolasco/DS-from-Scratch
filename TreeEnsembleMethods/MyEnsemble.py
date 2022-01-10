@@ -367,3 +367,63 @@ def weighted_median(values, weights):
     median_weight = np.argmax(weights_cumulative_sum >= sum(weights)/2)
     return values[median_weight]
 
+class AdaBoostR2:
+
+    def fit(self, X_train, y_train, T = 100, stub_depth = 1, random_state = None):
+
+        # initialize attributes
+        self.X_train = X_train
+        self.y_train = y_train
+        self.N, self.D = self.X_train.shape
+        self.T = T
+        self.stub_depth = stub_depth
+        self.weights = np.repeat(1 / self.N, self.N)
+        
+        # set seed for reproducibility
+        np.random.seed(random_state)
+
+        self.trees = []
+        self.fitted_values = np.empty((self.N, self.T))
+        self.betas = []
+
+        for t in range(self.T):
+            # initialize tree, fit, and predict
+            bootstrap_indices = np.random.choice(np.arange(self.N), size = self.N, 
+                                                replace = True, p = self.weights)
+            bootstrap_X = self.X_train[bootstrap_indices]
+            bootstrap_y = self.y_train[bootstrap_indices]
+            tree = DecisionTreeRegressor()
+            tree.fit(bootstrap_X, bootstrap_y, max_depth = self.stub_depth)
+            self.trees.append(tree)
+            yhat = tree.predict(self.X_train)
+            self.fitted_values[:, t] = yhat
+        
+            # calculate the errros for the observations
+            abs_error_t = np.abs(self.y_train - yhat)
+            D_t = np.max(abs_error_t)
+            L_ts = abs_error_t / D_t
+
+            # calculate model error (and possibly quit training)
+            Lbar_t = np.sum(self.weights*L_ts)
+            if Lbar_t >= 0.5:
+                self.T = t - 1
+                self.fitted_values = self.fitted_values[:, :t-1]
+                self.trees = self.trees[:t-1]
+                break
+            
+            # calculate and record beta
+            beta_t = Lbar_t / (1 - Lbar_t)
+            self.betas.append(beta_t)
+
+            # calculate new weights for next iteration
+            Z_t = np.sum(self.weights*beta_t**(1-L_ts))
+            self.weights *= beta_t**(1-L_ts)/Z_t
+        
+        # find weighted median
+        self.model_weights = np.log(1/np.array(self.betas))
+        self.y_train_hat = np.array([weighted_median(self.fitted_values[n], self.model_weights) 
+                                        for n in range(self.N)])
+        
+
+
+            
