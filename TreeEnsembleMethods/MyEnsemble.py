@@ -321,4 +321,25 @@ class AdaBoost:
         self.y_train = y_train
         self.T = T
         self.stub_depth = stub_depth
+        self.weights = np.repeat(1/self.N, self.N)
+        self.trees = []
+        self.alphas = []
+        self.yhats = np.empty((self.N, self.T))
+
+        for t in range(self.T):
+
+            self.T_t = DecisionTreeClassifier()
+            self.T_t.fit(self.X_train, self.y_train, self.weights, max_depth = self.stub_depth)
+            self.yhat_t = self.T_t.predict(self.X_train)
+            self.epsilon_t = sum(self.weights*(self.yhat_t != self.y_train)) / sum(self.weights)
+            self.alpha_t = np.log((1 - self.epsilon_t) / self.epsilon_t)
+            self.weights = np.array([w*(1 - self.epsilon_t) / self.epsilon_t 
+                                        if self.yhat_t[i] != self.y_train[i]
+                                        else w for i, w in enumerate(self.weights)])
+            
+            # append attributes
+            self.trees.append(self.T_t)
+            self.alphas.append(self.alpha_t)
+            self.yhats[:, t] = self.yhat_t
         
+        self.yhat = np.sign(np.dot(self.yhats self.alphas))
