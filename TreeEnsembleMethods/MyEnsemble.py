@@ -1,6 +1,7 @@
 from __future__ import division
 from enum import EnumMeta
 import numpy as np
+from numpy.core.fromnumeric import sort
 from MyDecisionTrees import DecisionTreeRegressor
 from MyDecisionTrees import all_rows_equal, possible_splits
 
@@ -353,3 +354,16 @@ class AdaBoost:
             yhats += yhats_trees*self.alphas[t]
 
         return np.sign(yhats)
+
+
+# ===== HELPER FUNCTION FOR AdaBoost.R2 ==========
+
+def weighted_median(values, weights):
+    
+    sorted_indices = values.argsort()
+    values = values[sorted_indices]
+    weights = weights[sorted_indices]
+    weights_cumulative_sum = weights.cumsum()
+    median_weight = np.argmax(weights_cumulative_sum >= sum(weights)/2)
+    return values[median_weight]
+
