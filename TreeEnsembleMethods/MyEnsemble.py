@@ -2,6 +2,7 @@ from __future__ import division
 from enum import EnumMeta
 import numpy as np
 from MyDecisionTrees import DecisionTreeRegressor
+from MyDecisionTrees import all_rows_equal
 
 # bagging regressor
 
@@ -174,7 +175,7 @@ class DecisionTreeClassifier:
             eligible_buds = {ID:node for (ID, node) in self.nodes_dict.items() if 
                                 (node.leaf == True) &
                                 (node.size >= self.min_size) & 
-                                (~ct.all_rows_equal(node.Xsub)) &
+                                (~all_rows_equal(node.Xsub)) &
                                 (len(np.unique(node.ysub)) > 1)}
             if len(eligible_buds) == 0:
                 break
