@@ -342,7 +342,7 @@ class AdaBoost:
             self.alphas.append(self.alpha_t)
             self.yhats[:, t] = self.yhat_t
         
-        self.yhat = np.sign(np.dot(self.yhats self.alphas))
+        self.yhat = np.sign(np.dot(self.yhats, self.alphas))
     
     def predict(self, X_test):
         
@@ -350,5 +350,5 @@ class AdaBoost:
         for t, tree in enumerate(self.trees):
             yhats_trees = tree.predict(X_test)
             yhats += yhats_trees*self.alphas[t]
-            
+
         return np.sign(yhats)
