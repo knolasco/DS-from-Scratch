@@ -38,7 +38,7 @@ class FeedForwardNeuralNetwork:
         self.W1 = np.random.randn(self.D_h, self.D_X) / 5
         self.c1 = np.random.randn(self.D_h, 1) / 5
         self.W2 = np.random.randn(self.D_y, self.D_h) / 5
-        self.c_2 = np.random.randn(self.D_y, 1) / 5
+        self.c2 = np.random.randn(self.D_y, 1) / 5
 
         # initialize outputs
         self.h1 = np.dot(self.W1, self.X.T) + self.c1
