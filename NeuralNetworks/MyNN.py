@@ -96,7 +96,7 @@ class FeedForwardNeuralNetwork:
                 dL_dh2 = dL_dyhat @ dyhat_dh2
                 dL_dW2 += dL_dh2 @ dh2_dW2
                 dL_dc2 += dL_dh2 @ dh2_dc2
-                dL_dh1 = dL_dh2 @ dh2_dz1
+                dL_dh1 = dL_dh2 @ dh2_dz1 @ dz1_dh1
                 dL_dW1 += dL_dh1 @ dh1_dW1
                 dL_dc1 += dL_dh1 @ dh1_dc1
 
