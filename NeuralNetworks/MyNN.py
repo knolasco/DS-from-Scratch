@@ -42,9 +42,9 @@ class FeedForwardNeuralNetwork:
 
         # initialize outputs
         self.h1 = np.dot(self.W1, self.X.T) + self.c1
-        self.z1 = activation_function_dict[f1](self.h1)
+        self.z1 = activation_function_dict[self.f1](self.h1)
         self.h2 = np.dot(self.W2, self.z1) + self.c2
-        self.z2 = activation_function_dict[f2](self.h2)
+        self.z2 = activation_function_dict[self.f2](self.h2)
 
         # fit the weights
         for iteration in range(self.n_iter):
@@ -65,9 +65,9 @@ class FeedForwardNeuralNetwork:
                 
                 # layer 2
                 # calculate dyhat_dh2
-                if f2 == 'linear':
+                if self.f2 == 'linear':
                     dyhat_dh2 = np.eye(self.D_y)
-                elif f2 == 'sigmoid':
+                elif self.f2 == 'sigmoid':
                     dyhat_dh2 = np.diag(sigmoid(self.h2[:, n])*(1 - sigmoid(self.h2[:, n])))
                 
                 
@@ -80,9 +80,9 @@ class FeedForwardNeuralNetwork:
                 dh2_dz1 = self.W2
 
                 # layer 1
-                if f1 == 'ReLU':
+                if self.f1 == 'ReLU':
                     dz1_dh1 = 1*np.diag(self.h1[:, n] > 0)
-                elif f1 == 'linear':
+                elif self.f1 == 'linear':
                     dz1_dh1 = np.eye(self.D_h)
                 
                 dh1_dc1 = np.eye(self.D_h)
@@ -108,7 +108,13 @@ class FeedForwardNeuralNetwork:
 
             # update outputs
             self.h1 = np.dot(self.W1, self.X.T) + self.c1
-            self.z1 = activation_function_dict[f1](self.h1)
-            self.h2 = np.dot(self.W2, self.z1) + self.c_2
-            self.z2 = activation_function_dict[f2](self.h2)
-            
+            self.z1 = activation_function_dict[self.f1](self.h1)
+            self.h2 = np.dot(self.W2, self.z1) + self.c2
+            self.z2 = activation_function_dict[self.f2](self.h2)
+
+    def predict(self, X_test):
+        self.h1 = np.dot(self.W1, self.X_test.T) + self.c1
+        self.z1 = activation_function_dict[self.self.f1](self.h1)
+        self.h2 = np.dot(self.W2, self.z1) + self.c2
+        self.yhat = activation_function_dict[self.f2](self.h2)
+        return self.yhat
