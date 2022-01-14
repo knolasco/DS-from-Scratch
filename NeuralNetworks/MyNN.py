@@ -44,7 +44,7 @@ class FeedForwardNeuralNetwork:
         self.h1 = np.dot(self.W1, self.X.T) + self.c1
         self.z1 = activation_function_dict[self.f1](self.h1)
         self.h2 = np.dot(self.W2, self.z1) + self.c2
-        self.z2 = activation_function_dict[self.f2](self.h2)
+        self.yhat = activation_function_dict[self.f2](self.h2)
 
         # fit the weights
         for iteration in range(self.n_iter):
@@ -110,7 +110,7 @@ class FeedForwardNeuralNetwork:
             self.h1 = np.dot(self.W1, self.X.T) + self.c1
             self.z1 = activation_function_dict[self.f1](self.h1)
             self.h2 = np.dot(self.W2, self.z1) + self.c2
-            self.z2 = activation_function_dict[self.f2](self.h2)
+            self.yhat = activation_function_dict[self.f2](self.h2)
 
     def predict(self, X_test):
 
