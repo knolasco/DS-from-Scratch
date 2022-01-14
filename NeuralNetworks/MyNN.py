@@ -113,6 +113,7 @@ class FeedForwardNeuralNetwork:
             self.z2 = activation_function_dict[self.f2](self.h2)
 
     def predict(self, X_test):
+        
         self.h1 = np.dot(self.W1, self.X_test.T) + self.c1
         self.z1 = activation_function_dict[self.self.f1](self.h1)
         self.h2 = np.dot(self.W2, self.z1) + self.c2
