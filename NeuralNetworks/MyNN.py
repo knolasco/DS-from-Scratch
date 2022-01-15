@@ -144,7 +144,7 @@ class FeedForwardMatrix:
         self.W1 = np.random.randn(self.D_h, self.D_X)/5
         self.c1 = np.random.randn(self.D_h, 1)/5
         self.W2 = np.random.randn(self.D_y, self.D_h)/5
-        self.c2 = np.random.randn(self.D_Y, 1)/5
+        self.c2 = np.random.randn(self.D_y, 1)/5
 
         # initialize outputs
         self.H1 = (self.W1 @ self.Xt) + self.c1
