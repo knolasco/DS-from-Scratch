@@ -128,7 +128,7 @@ class FeedForwardMatrix:
         self.X = X
         self.y = y.reshape(len(y), -1)
         self.N = self.X.shape[0]
-        self.D_X = self.shape[1]
+        self.D_X = self.X.shape[1]
         self.D_y = self.y.shape[1]
         self.Xt = self.X.T
         self.yt = self.y.T
