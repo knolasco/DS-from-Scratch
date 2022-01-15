@@ -161,9 +161,9 @@ class FeedForwardMatrix:
                 self.dL_dyhat = (-(self.yt/self.yhat) + (1 - self.yt)/(1 - self.yhat))
             
             if self.f2 == 'linear':
-                self.yhat_dh2 = np.ones((self.D_y, self.N))
+                self.dyhat_dh2 = np.ones((self.D_y, self.N))
             elif self.f2 == 'sigmoid':
-                self.yhat_dh2 = sigmoid(self.H2) * (1 - sigmoid(self.H2))
+                self.dyhat_dh2 = sigmoid(self.H2) * (1 - sigmoid(self.H2))
             
             self.dL_dH2 = self.dL_dyhat * self.dyhat_dh2
 
