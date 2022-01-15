@@ -193,4 +193,11 @@ class FeedForwardMatrix:
             self.Z1 = activation_function_dict[self.f1](self.H1)
             self.H2 = (self.W2 @ self.Z1) + self.c2
             self.yhat = activation_function_dict[self.f2](self.H2)
-            
+    
+    def predict(self, X_test):
+        X_testT = X_test.T
+        self.h1 = (self.W1 @ X_testT) + self.c1
+        self.z1 = activation_function_dict[self.f1](self.h1)
+        self.h2 = (self.W2 @ self.z1) + self.c2
+        self.yhat = activation_function_dict[self.f2](self.h2)
+        return self.yhat
