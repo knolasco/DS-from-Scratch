@@ -38,13 +38,13 @@ class FeedForwardNeuralNetwork:
         self.W1 = np.random.randn(self.D_h, self.D_X) / 5
         self.c1 = np.random.randn(self.D_h, 1) / 5
         self.W2 = np.random.randn(self.D_y, self.D_h) / 5
-        self.c_2 = np.random.randn(self.D_y, 1) / 5
+        self.c2 = np.random.randn(self.D_y, 1) / 5
 
         # initialize outputs
         self.h1 = np.dot(self.W1, self.X.T) + self.c1
-        self.z1 = activation_function_dict[f1](self.h1)
+        self.z1 = activation_function_dict[self.f1](self.h1)
         self.h2 = np.dot(self.W2, self.z1) + self.c2
-        self.z2 = activation_function_dict[f2](self.h2)
+        self.yhat = activation_function_dict[self.f2](self.h2)
 
         # fit the weights
         for iteration in range(self.n_iter):
@@ -60,14 +60,14 @@ class FeedForwardNeuralNetwork:
                 # calculate dL_dyhat based on loss
                 if loss == 'RSS':
                     dL_dyhat = -2*(self.y[n] - self.yhat[:, n]).T
-                elif loss = 'log':
+                elif loss == 'log':
                     dL_dyhat = (-(self.y[n] / self.yhat[:, n]) + (1 - self.y[n]) / (1 - self.yhat[:, n])).T
                 
                 # layer 2
                 # calculate dyhat_dh2
-                if f2 == 'linear':
+                if self.f2 == 'linear':
                     dyhat_dh2 = np.eye(self.D_y)
-                elif f2 == 'sigmoid':
+                elif self.f2 == 'sigmoid':
                     dyhat_dh2 = np.diag(sigmoid(self.h2[:, n])*(1 - sigmoid(self.h2[:, n])))
                 
                 
@@ -80,9 +80,9 @@ class FeedForwardNeuralNetwork:
                 dh2_dz1 = self.W2
 
                 # layer 1
-                if f1 == 'ReLU':
+                if self.f1 == 'ReLU':
                     dz1_dh1 = 1*np.diag(self.h1[:, n] > 0)
-                elif f1 == 'linear':
+                elif self.f1 == 'linear':
                     dz1_dh1 = np.eye(self.D_h)
                 
                 dh1_dc1 = np.eye(self.D_h)
@@ -96,7 +96,7 @@ class FeedForwardNeuralNetwork:
                 dL_dh2 = dL_dyhat @ dyhat_dh2
                 dL_dW2 += dL_dh2 @ dh2_dW2
                 dL_dc2 += dL_dh2 @ dh2_dc2
-                dL_dh1 = dL_dh2 @ dh2_dz1
+                dL_dh1 = dL_dh2 @ dh2_dz1 @ dz1_dh1
                 dL_dW1 += dL_dh1 @ dh1_dW1
                 dL_dc1 += dL_dh1 @ dh1_dc1
 
@@ -108,7 +108,14 @@ class FeedForwardNeuralNetwork:
 
             # update outputs
             self.h1 = np.dot(self.W1, self.X.T) + self.c1
-            self.z1 = activation_function_dict[f1](self.h1)
-            self.h2 = np.dot(self.W2, self.z1) + self.c_2
-            self.z2 = activation_function_dict[f2](self.h2)
-            
+            self.z1 = activation_function_dict[self.f1](self.h1)
+            self.h2 = np.dot(self.W2, self.z1) + self.c2
+            self.yhat = activation_function_dict[self.f2](self.h2)
+
+    def predict(self, X_test):
+
+        self.h1 = np.dot(self.W1, X_test.T) + self.c1
+        self.z1 = activation_function_dict[self.f1](self.h1)
+        self.h2 = np.dot(self.W2, self.z1) + self.c2
+        self.yhat = activation_function_dict[self.f2](self.h2)
+        return self.yhat
