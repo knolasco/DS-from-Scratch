@@ -119,3 +119,85 @@ class FeedForwardNeuralNetwork:
         self.h2 = np.dot(self.W2, self.z1) + self.c2
         self.yhat = activation_function_dict[self.f2](self.h2)
         return self.yhat
+
+class FeedForwardMatrix:
+    
+    def fit(self, X, y, n_hidden, f1 = 'ReLU', f2 = 'linear', loss = 'RSS', lr = 1e-5, n_iter = 5e3, seed = None):
+
+        # initialize attributes
+        self.X = X
+        self.y = y.reshape(len(y), -1)
+        self.N = self.X.shape[0]
+        self.D_X = self.X.shape[1]
+        self.D_y = self.y.shape[1]
+        self.Xt = self.X.T
+        self.yt = self.y.T
+        self.D_h = n_hidden
+        self.f1, self.f2 = f1, f2
+        self.loss = loss
+        self.lr = lr
+        self.n_iter = int(n_iter)
+        self.seed = seed
+
+        # initialize weights
+        np.random.seed(self.seed)
+        self.W1 = np.random.randn(self.D_h, self.D_X)/5
+        self.c1 = np.random.randn(self.D_h, 1)/5
+        self.W2 = np.random.randn(self.D_y, self.D_h)/5
+        self.c2 = np.random.randn(self.D_y, 1)/5
+
+        # initialize outputs
+        self.H1 = (self.W1 @ self.Xt) + self.c1
+        self.Z1 = activation_function_dict[self.f1](self.H1)
+        self.H2 = (self.W2 @ self.Z1) + self.c2
+        self.yhat = activation_function_dict[self.f2](self.H2)
+
+        # fit the weights
+        for iteration in range(self.n_iter):
+
+            if self.loss == 'RSS':
+                self.dL_dyhat = -(self.yt - self.yhat)
+            elif self.loss == 'log':
+                self.dL_dyhat = (-(self.yt/self.yhat) + (1 - self.yt)/(1 - self.yhat))
+            
+            if self.f2 == 'linear':
+                self.dyhat_dh2 = np.ones((self.D_y, self.N))
+            elif self.f2 == 'sigmoid':
+                self.dyhat_dh2 = sigmoid(self.H2) * (1 - sigmoid(self.H2))
+            
+            self.dL_dH2 = self.dL_dyhat * self.dyhat_dh2
+
+            self.dL_dc2 = np.sum(self.dL_dH2, 1)
+
+            self.dL_dW2 = np.tensordot(self.dL_dH2, self.Z1, (1,1))
+
+            self.dL_dZ1 = np.tensordot(self.W2, self.dL_dH2, (0,0))
+
+            if self.f1 == 'ReLU':
+                self.dL_dH1 = self.dL_dZ1 * np.maximum(self.H1, 0)
+            elif self.f1 == 'linear':
+                self.dL_dH1 = self.dL_dZ1
+            
+            self.dL_dc1 = np.sum(self.dL_dH1, 1)
+
+            self.dL_dW1 = np.tensordot(self.dL_dH1, self.Xt, (1,1))
+
+            # update the weights
+            self.W1 -= self.lr * self.dL_dW1
+            self.c1 -= self.lr * self.dL_dc1.reshape(-1,1)
+            self.W2 -= self.lr * self.dL_dW2
+            self.c2 -= self.lr * self.dL_dc2.reshape(-1,1)
+
+            # update the outputs
+            self.H1 = (self.W1 @ self.Xt) + self.c1
+            self.Z1 = activation_function_dict[self.f1](self.H1)
+            self.H2 = (self.W2 @ self.Z1) + self.c2
+            self.yhat = activation_function_dict[self.f2](self.H2)
+    
+    def predict(self, X_test):
+        X_testT = X_test.T
+        self.h1 = (self.W1 @ X_testT) + self.c1
+        self.z1 = activation_function_dict[self.f1](self.h1)
+        self.h2 = (self.W2 @ self.z1) + self.c2
+        self.yhat = activation_function_dict[self.f2](self.h2)
+        return self.yhat
